@@ -1,0 +1,73 @@
+# Despliegue de GameConsole con las imágenes YA construidas y publicadas por el
+# pipeline de CI en GitHub Container Registry (GHCR). No compila nada.
+#
+#   docker compose -f docker-compose.deploy.yml pull
+#   docker compose -f docker-compose.deploy.yml up -d
+#   abrir http://<máquina>:8000
+#
+# Variables opcionales (archivo .env junto a este archivo o variables de entorno):
+#   GHCR_OWNER       dueño de las imágenes de GameConsole y de GameStats (minúsculas)
+#   GAMECONSOLE_TAG  versión de GameConsole: latest (por defecto), v1.0.0 o sha-...
+#   GAMESTATS_TAG    versión de GameStats: latest (por defecto)
+#   CONSOLE_PORT     puerto donde se publica la consola (8000 por defecto)
+name: gameconsole
+
+services:
+  console:
+    image: ghcr.io/${GHCR_OWNER:-seishirogojo}/gameconsole-console:${GAMECONSOLE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${CONSOLE_PORT:-8000}:8000"
+    environment:
+      - GAMESTATS_INGEST_URL=http://go-ingestion:8080
+      - GAMESTATS_ANALYSIS_URL=http://scala-analysis:8081
+      - PROLOG_URL=http://prolog:8090
+    depends_on:
+      prolog:
+        condition: service_healthy
+      go-ingestion:
+        condition: service_healthy
+
+  prolog:
+    image: ghcr.io/${GHCR_OWNER:-seishirogojo}/gameconsole-prolog:${GAMECONSOLE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    expose:
+      - "8090"
+
+  go-ingestion:
+    image: ghcr.io/${GHCR_OWNER:-seishirogojo}/gamestats-ingestion:${GAMESTATS_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - PORT=8080
+      - SCALA_ANALYSIS_URL=http://scala-analysis:8081
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      scala-analysis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  scala-analysis:
+    image: ghcr.io/${GHCR_OWNER:-seishirogojo}/gamestats-analysis:${GAMESTATS_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - PORT=8081
+      - DB_PATH=/app/data/gamestats.db
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - gamestats-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  gamestats-data:

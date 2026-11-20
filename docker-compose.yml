@@ -1,0 +1,66 @@
+# GameConsole completo para desarrollo/pruebas locales: construye la consola y
+# Prolog desde el código y descarga GameStats (ya publicado por su propio CI).
+#
+#   docker compose up -d --build --wait
+#   abrir http://localhost:8000
+#
+# Variables opcionales (archivo .env o entorno):
+#   GHCR_OWNER      dueño de las imágenes de GameStats (por defecto seishirogojo)
+#   GAMESTATS_TAG   versión de GameStats (por defecto latest)
+name: gameconsole
+
+services:
+  console:
+    build: ./console
+    init: true
+    ports:
+      - "8000:8000"
+    environment:
+      - GAMESTATS_INGEST_URL=http://go-ingestion:8080
+      - GAMESTATS_ANALYSIS_URL=http://scala-analysis:8081
+      - PROLOG_URL=http://prolog:8090
+    depends_on:
+      prolog:
+        condition: service_healthy
+      go-ingestion:
+        condition: service_healthy
+
+  prolog:
+    build: ./prolog
+    init: true
+    expose:
+      - "8090"
+
+  go-ingestion:
+    image: ghcr.io/${GHCR_OWNER:-seishirogojo}/gamestats-ingestion:${GAMESTATS_TAG:-latest}
+    environment:
+      - PORT=8080
+      - SCALA_ANALYSIS_URL=http://scala-analysis:8081
+    ports:
+      - "8080:8080"
+    depends_on:
+      scala-analysis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  scala-analysis:
+    image: ghcr.io/${GHCR_OWNER:-seishirogojo}/gamestats-analysis:${GAMESTATS_TAG:-latest}
+    environment:
+      - PORT=8081
+      - DB_PATH=/app/data/gamestats.db
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - gamestats-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  gamestats-data:
