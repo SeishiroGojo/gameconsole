@@ -1,0 +1,12 @@
+# Úsalo cuando las imágenes de GameStats v2 todavía NO están publicadas en GHCR
+# (por ejemplo, si el CI de GameStats no ha podido correr). Construye GameStats
+# desde la carpeta hermana ../gamestats en lugar de descargarlo.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.local-gamestats.yml up -d --build --wait
+services:
+  go-ingestion:
+    build: ../gamestats/go-ingestion
+    image: gamestats-ingestion:local
+  scala-analysis:
+    build: ../gamestats/scala-analysis
+    image: gamestats-analysis:local
