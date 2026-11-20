@@ -1,12 +1,11 @@
-# GameConsole completo para desarrollo/pruebas locales: construye la consola y
-# Prolog desde el código y descarga GameStats (ya publicado por su propio CI).
+# GameConsole completo. Construye todo desde el código fuente:
+#   - console y prolog: carpetas de este repositorio
+#   - GameStats (Go + Scala): carpeta hermana ../gamestats
+#
+# Estructura esperada:   <carpeta>/gameconsole   y   <carpeta>/gamestats
 #
 #   docker compose up -d --build --wait
 #   abrir http://localhost:8000
-#
-# Variables opcionales (archivo .env o entorno):
-#   GHCR_OWNER      dueño de las imágenes de GameStats (por defecto seishirogojo)
-#   GAMESTATS_TAG   versión de GameStats (por defecto latest)
 name: gameconsole
 
 services:
@@ -32,7 +31,7 @@ services:
       - "8090"
 
   go-ingestion:
-    image: ghcr.io/${GHCR_OWNER:-seishirogojo}/gamestats-ingestion:${GAMESTATS_TAG:-latest}
+    build: ../gamestats/go-ingestion
     environment:
       - PORT=8080
       - SCALA_ANALYSIS_URL=http://scala-analysis:8081
@@ -48,7 +47,7 @@ services:
       retries: 10
 
   scala-analysis:
-    image: ghcr.io/${GHCR_OWNER:-seishirogojo}/gamestats-analysis:${GAMESTATS_TAG:-latest}
+    build: ../gamestats/scala-analysis
     environment:
       - PORT=8081
       - DB_PATH=/app/data/gamestats.db

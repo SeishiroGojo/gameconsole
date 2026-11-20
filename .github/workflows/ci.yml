@@ -2,7 +2,7 @@ name: GameConsole CI
 
 # Pipeline: probar cada componente, probar el sistema integrado con Docker Compose
 # (consola + Prolog + GameStats), publicar las imágenes en GHCR y (opcional) desplegar.
-# Documentación: docs/ci-cd-y-deployment.md
+# Documentación: docs/instalacion-y-deployment.md
 
 on:
   push:
@@ -57,8 +57,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Descargar GameStats y construir la consola y Prolog
-        run: docker compose up -d --build --wait --wait-timeout 300
+      - name: Clonar GameStats junto a este repositorio (el compose lo construye desde ../gamestats)
+        run: git clone --depth 1 "https://github.com/${GITHUB_REPOSITORY_OWNER}/gamestats.git" ../gamestats
+      - name: Construir y levantar todo con Docker Compose
+        run: docker compose up -d --build --wait --wait-timeout 600
       - name: Estado de los contenedores
         run: docker compose ps
       - name: Prueba de humo de punta a punta

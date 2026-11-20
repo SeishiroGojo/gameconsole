@@ -1,5 +1,6 @@
-# Despliegue de GameConsole con las imágenes YA construidas y publicadas por el
+# Despliegue de GameConsole con las imágenes ya construidas y publicadas por el
 # pipeline de CI en GitHub Container Registry (GHCR). No compila nada.
+# Requiere que el CI haya corrido y publicado las imágenes (ver README, sección CI/CD).
 #
 #   docker compose -f docker-compose.deploy.yml pull
 #   docker compose -f docker-compose.deploy.yml up -d
