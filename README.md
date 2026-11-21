@@ -5,7 +5,7 @@ Consola de videojuegos web con tres juegos hechos con programación orientada a 
 **Curso:** Lenguajes de Programación, Proyecto 2
 **Integrantes:** Kendall Andrade y Emerson Ramirez
 **Repositorios:** [gameconsole](https://github.com/SeishiroGojo/gameconsole) y [gamestats](https://github.com/SeishiroGojo/gamestats)
-**Video de demostración:** _pegar aquí el enlace_
+**Video de demostración:** https://youtu.be/vYrueaqttVg
 
 ## Cómo está organizado
 
